@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const baseUrl = 'http://localhost:3000/api/'
+const baseUrl = import.meta.env.VITE_API_BASE_URL 
 
 export const register = async (body) => {
     const options={
@@ -20,6 +20,23 @@ export const register = async (body) => {
       
     } 
     
+}
+
+export const login = async (body) => {
+    const options = {
+        method: 'POST',
+        url: `${baseUrl}auth/login`,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        data: body
+    }
+    try {
+        const response = await axios.request(options)
+        return response.data
+    } catch (error) {
+        throw error
+    }
 }
 
 export const confirmEmail = async (token) => {
