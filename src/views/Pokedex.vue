@@ -100,11 +100,11 @@
       <div v-else class="space-y-8">
         <!-- Lista de Pokémon -->
         <div
-          v-if="filteredPokemon.length > 0"
+          v-if="visiblePokemon.length > 0"
           class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
         >
           <PokemonCard
-            v-for="pokemon in filteredPokemon"
+            v-for="pokemon in visiblePokemon"
             :key="pokemon.id"
             :pokemon="pokemon"
             @click="selectedPokemon = pokemon"
@@ -117,15 +117,14 @@
         </div>
 
         <!-- Sentinel para scroll infinito -->
-        <div ref="infiniteScrollTrigger" class="h-4"></div>
+        <div ref="filteredScrollTrigger" class="h-8"></div>
 
-        <!-- Estado de carga adicional -->
-        <div v-if="loadingMore" class="text-center py-10">
+        <div v-if="hasMoreFiltered && !loading" class="text-center py-10">
           <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-purple-500"></div>
           <p class="mt-4 text-gray-600">Cargando más Pokémon...</p>
         </div>
-        <div v-else-if="!hasMore" class="text-center py-10 text-gray-500">
-          <p>Has llegado al final de la Pokédex</p>
+        <div v-else-if="!hasMoreFiltered && visiblePokemon.length > 0" class="text-center py-10 text-gray-500">
+          <p>Has llegado al final de la Pokédex filtrada</p>
         </div>
       </div>
     </main>
@@ -149,15 +148,7 @@ import PokemonCard from '../components/PokemonCard.vue'
 import PokemonDetail from '../components/PokemonDetail.vue'
 
 const router = useRouter()
-const {
-  pokemonList,
-  loading,
-  loadingMore,
-  hasMore,
-  error,
-  fetchPokemon,
-  loadMorePokemon
-} = usePokemon()
+const { pokemonList, loading, error, fetchPokemon } = usePokemon()
 const { getFavorites } = useFavorites()
 
 const searchQuery = ref('')
@@ -166,8 +157,12 @@ const selectedPrimaryType = ref('')
 const selectedSecondaryType = ref('')
 const showOnlyFavorites = ref(false)
 const selectedPokemon = ref(null)
-const infiniteScrollTrigger = ref(null)
-let intersectionObserver = null
+const filteredScrollTrigger = ref(null)
+const filteredObserver = ref(null)
+const visiblePokemon = ref([])
+const filteredOffset = ref(0)
+const PAGE_SIZE = 20
+const hasMoreFiltered = ref(true)
 
 const generationOptions = [
   { id: 'gen1', label: 'Generación 1 (Kanto)', range: [1, 151] },
@@ -223,6 +218,28 @@ const filteredPokemon = computed(() => {
   return filtered
 })
 
+const resetVisiblePokemon = () => {
+  const initialSlice = filteredPokemon.value.slice(0, PAGE_SIZE)
+  visiblePokemon.value = initialSlice
+  filteredOffset.value = initialSlice.length
+  hasMoreFiltered.value = filteredOffset.value < filteredPokemon.value.length
+}
+
+const loadMoreFilteredPokemon = () => {
+  if (!hasMoreFiltered.value) return
+  const nextSlice = filteredPokemon.value.slice(
+    filteredOffset.value,
+    filteredOffset.value + PAGE_SIZE
+  )
+  if (nextSlice.length === 0) {
+    hasMoreFiltered.value = false
+    return
+  }
+  visiblePokemon.value = [...visiblePokemon.value, ...nextSlice]
+  filteredOffset.value += nextSlice.length
+  hasMoreFiltered.value = filteredOffset.value < filteredPokemon.value.length
+}
+
 const handleLogout = () => {
   localStorage.removeItem('isAuthenticated')
   localStorage.removeItem('token')
@@ -232,53 +249,50 @@ const handleLogout = () => {
   router.push('/')
 }
 
-const initializeObserver = () => {
-  if (intersectionObserver) {
-    intersectionObserver.disconnect()
-  }
-
-  intersectionObserver = new IntersectionObserver(
-    (entries) => {
-      const [entry] = entries
-      if (
-        entry.isIntersecting &&
-        !loading.value &&
-        !loadingMore.value &&
-        hasMore.value
-      ) {
-        loadMorePokemon()
-      }
-    },
-    {
-      root: null,
-      rootMargin: '0px 0px 200px 0px',
-      threshold: 0
-    }
-  )
-
-  if (infiniteScrollTrigger.value) {
-    intersectionObserver.observe(infiniteScrollTrigger.value)
-  }
-}
-
 onMounted(() => {
   fetchPokemon()
-  initializeObserver()
 })
 
 onUnmounted(() => {
-  if (intersectionObserver) {
-    intersectionObserver.disconnect()
+  if (filteredObserver.value) {
+    filteredObserver.value.disconnect()
   }
 })
 
 watch(
-  () => infiniteScrollTrigger.value,
+  () => filteredPokemon.value,
+  () => {
+    resetVisiblePokemon()
+  },
+  { immediate: true }
+)
+
+watch(
+  () => filteredScrollTrigger.value,
   (el) => {
-    if (el && intersectionObserver) {
-      intersectionObserver.observe(el)
+    if (filteredObserver.value) {
+      filteredObserver.value.disconnect()
     }
-  }
+
+    if (!el) return
+
+    filteredObserver.value = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        if (entry.isIntersecting && !loading.value) {
+          loadMoreFilteredPokemon()
+        }
+      },
+      {
+        root: null,
+        rootMargin: '0px 0px 200px 0px',
+        threshold: 0
+      }
+    )
+
+    filteredObserver.value.observe(el)
+  },
+  { immediate: true }
 )
 </script>
 
