@@ -51,3 +51,18 @@ router.beforeEach((to, from, next) => {
 
 createApp(App).use(router).mount('#app')
 
+let db=window.indexedDB.open('database')
+
+db.onupgradeneeded=event=>{
+  let result=event.target.result;
+  result.createObjectStore("table", {autoIncrement:true});
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .catch((err) => console.error('SW registration failed', err))
+  })
+}
+

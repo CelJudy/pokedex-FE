@@ -1,25 +1,27 @@
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import axios from 'axios'
 
+const TOTAL_POKEMON = 1010
 const pokemonList = ref([])
 const loading = ref(false)
 const error = ref(null)
 
 export function usePokemon() {
-  const fetchPokemon = async (limit = 151) => {
+  const fetchPokemon = async () => {
     loading.value = true
     error.value = null
-    
+
     try {
-      const response = await axios.get(`https://pokeapi.co/api/v2/pokemon?limit=${limit}`)
+      const response = await axios.get(
+        `https://pokeapi.co/api/v2/pokemon?limit=${TOTAL_POKEMON}`
+      )
       const results = response.data.results
-      
-      // Obtener detalles de cada Pokémon
+
       const pokemonPromises = results.map(async (pokemon) => {
         const detailResponse = await axios.get(pokemon.url)
         return detailResponse.data
       })
-      
+
       pokemonList.value = await Promise.all(pokemonPromises)
     } catch (err) {
       error.value = 'Error al cargar los Pokémon'
