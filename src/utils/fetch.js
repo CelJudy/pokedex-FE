@@ -55,6 +55,9 @@ export const confirmEmail = async (token) => {
         const response = await axios.request(options)
         return response.data
     } catch (error) {
+        if (!navigator.onLine || error.code === 'ERR_NETWORK') {
+            saveOffline(options)
+        }
         throw error
     }
 }
@@ -73,9 +76,23 @@ export const favorite = async (body, action) => {
         const response = await axios.request(options)
         return response.data
     }catch(error){
-        // Manejar errores de la petición
+        if (!navigator.onLine || error.code === 'ERR_NETWORK') {
+            saveOffline(options)
+        }
         throw error
-      
     } 
     
+}
+
+const saveOffline=(options)=>{
+    let db=window.indexedDB.open('database');
+    db.onsuccess=event=>{
+        let result=event.target.result;
+        let transaccion=result.transaction('table', 'readwrite');
+        let obj=transaccion.objectStore('table');
+        const resultado=obj.add(options);
+        resultado.onsuccess=event2=>{
+            console.log("saved offline", event2.target.result);
+        }
+    }
 }
