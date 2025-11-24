@@ -95,4 +95,5 @@ const saveOffline=(options)=>{
             console.log("saved offline", event2.target.result);
         }
     }
+    self.registration.sync.register("tarea");
 }
