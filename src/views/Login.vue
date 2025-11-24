@@ -152,7 +152,7 @@ const handleLogin = async () => {
         localStorage.setItem('token', response.data.token)
         localStorage.setItem('user', response.data.user.email)
         localStorage.setItem('id', response.data.user.id)
-        localStorage.setItem('favorites', response.data.pokemon)
+        localStorage.setItem('favorites', `[${response.data.pokemon}]`)
         
 
         
