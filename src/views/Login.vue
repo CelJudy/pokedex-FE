@@ -152,6 +152,9 @@ const handleLogin = async () => {
         localStorage.setItem('token', response.data.token)
         localStorage.setItem('user', response.data.user.email)
         localStorage.setItem('id', response.data.user.id)
+        localStorage.setItem('favorites', response.data.pokemon)
+        
+
         
         // Esperar un momento para que el usuario vea el mensaje antes de redirigir
         router.push('/pokedex')

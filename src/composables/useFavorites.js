@@ -1,16 +1,25 @@
 import { ref, computed } from 'vue'
+import { favorite } from '../utils/fetch'
 
 const favorites = ref(JSON.parse(localStorage.getItem('favorites') || '[]'))
 
 export function useFavorites() {
-  const toggleFavorite = (pokemonId) => {
+  const toggleFavorite = async (pokemonId) => {
     const index = favorites.value.indexOf(pokemonId)
-    if (index > -1) {
-      favorites.value.splice(index, 1)
-    } else {
-      favorites.value.push(pokemonId)
+    try{
+      if (index > -1) {
+        favorites.value.splice(index, 1)
+        await favorite({id:localStorage.getItem("id"), pokemon:pokemonId}, "delete")
+      } else {
+        favorites.value.push(pokemonId)
+        await favorite({id:localStorage.getItem("id"), pokemon:pokemonId}, "save")
+      }
+      localStorage.setItem('favorites', JSON.stringify(favorites.value))
+
+    }catch(error){
+
     }
-    localStorage.setItem('favorites', JSON.stringify(favorites.value))
+    
   }
 
   const isFavorite = (pokemonId) => {

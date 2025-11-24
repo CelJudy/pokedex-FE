@@ -33,6 +33,7 @@ export const login = async (body) => {
     }
     try {
         const response = await axios.request(options)
+        console.log(response.data);
         return response.data
     } catch (error) {
         throw error
@@ -56,4 +57,25 @@ export const confirmEmail = async (token) => {
     } catch (error) {
         throw error
     }
+}
+
+export const favorite = async (body, action) => {
+    const options={
+        method:"POST",
+        url:`${baseUrl}pokemon/${action}Favorite`,
+        headers:{
+            'Content-Type':'application/json',
+            'Authorization': `Bearer ${localStorage.getItem("token")}`
+        },
+        data:body
+    }
+    try{
+        const response = await axios.request(options)
+        return response.data
+    }catch(error){
+        // Manejar errores de la petición
+        throw error
+      
+    } 
+    
 }

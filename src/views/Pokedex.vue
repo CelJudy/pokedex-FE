@@ -160,6 +160,10 @@ const filteredPokemon = computed(() => {
 
 const handleLogout = () => {
   localStorage.removeItem('isAuthenticated')
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  localStorage.removeItem('id')
+  localStorage.removeItem('favorites')
   router.push('/')
 }
 
