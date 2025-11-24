@@ -1,7 +1,8 @@
 import { ref, computed } from 'vue'
-import { favorite } from '../utils/fetch'
+import { favorite } from '../utils/fetch.js'
 
-const favorites = ref(JSON.parse(localStorage.getItem('favorites') || '[]'))
+const storedFavorites = localStorage.getItem('favorites')
+const favorites = ref(storedFavorites ? JSON.parse(storedFavorites) : [])
 
 export function useFavorites() {
   const toggleFavorite = async (pokemonId) => {
